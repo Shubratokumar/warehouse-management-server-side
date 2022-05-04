@@ -17,15 +17,28 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
       await client.connect();
-      const productCollection = client.db("wearhouseManagement").collection("product");
+      const productCollection = client.db("warehouseManagement").collection("product");
 
-    //  GET : Read data from database
+    //  GET : Read all data from database
     // http://localhost:5000/products
     app.get("/products", async(req, res)=>{
         const query = {};
         const cursor = productCollection.find(query)
-        const result = await cursor.toArray()
-        res.send(result)
+        const products = await cursor.toArray();
+        // validation
+        if(!products?.length){
+            return res.send({success : false, error : "No Product Found!!!"})
+        }
+        res.send({success: ture, data: products})
+    })
+
+    // GET : Read or load single data from database
+
+    app.get("/products/:id", async(req, res)=>{
+        const id = req.params.id;
+        const query = {_id: ObjectId(id)};
+        const result = await productCollection.findOne(query);
+        res.send(result);
     })
 
     // POST : Create new product
@@ -37,18 +50,18 @@ async function run() {
     })
 
     // PUT : Update a specific product
-    // http://localhost:5000/product/${id}
-    app.put("/product/:id", async(req, res)=>{
+    // http://localhost:5000/products/${id}
+    app.put("/products/:id", async(req, res)=>{
         const id = req.params.id;
         const data = req.body;
         const filter = {_id: ObjectId(id)};
         const options = { upsert: true };
-        const  updateProduct ={
+        const  updateQuantity ={
             $set : {
-                ...data
+                quantity : data.quantity
             }
-        };
-        const result = await productCollection.updateOne(filter, updateProduct, options);
+        };     
+        const result = await productCollection.updateOne(filter, updateQuantity, options);
         res.send(result)
     })
 
