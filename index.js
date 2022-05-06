@@ -44,7 +44,6 @@ async function run() {
         const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
             expiresIn: '1d'
         });
-        // console.log(accessToken)
         res.send({accessToken})
     })
 
@@ -122,14 +121,12 @@ async function run() {
   }
   run().catch(console.dir);
 
-
-
 // test the server 
 app.get('/', (req,res)=>{
-    res.send("Wearhouse server is running.")
+    res.send("Waerhouse server is running.")
 })
 
 // Listening the port
 app.listen(port, ()=>{
-    console.log("Wearhouse server is listening from the port: ", port)
+    console.log("Waerhouse server is listening from the port: ", port)
 })
