@@ -3,6 +3,7 @@ const express = require("express");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
+const jwt = require('jsonwebtoken');
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 
@@ -19,26 +20,47 @@ async function run() {
       await client.connect();
       const productCollection = client.db("warehouseManagement").collection("product");
 
+    // AUTH API's
+    // creating token for user while login
+    app.post('/login', async(req, res) =>{
+        const user = req.body;
+        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+            expiresIn: '1d'
+        });
+        // console.log(accessToken)
+        res.send({accessToken})
+    })
+
+
+    // PRODUCTS API's
     //  GET : Read all data from database
     // http://localhost:5000/products
     app.get("/products", async(req, res)=>{
         const query = {};
         const cursor = productCollection.find(query)
         const products = await cursor.toArray();
-        // validation
-        if(!products?.length){
-            return res.send({success : false, error : "No Product Found!!!"})
-        }
-        res.send({success: ture, data: products})
+        res.send(products)
     })
 
     // GET : Read or load single data from database
-
+    // http://localhost:5000/products/${id}
     app.get("/products/:id", async(req, res)=>{
         const id = req.params.id;
         const query = {_id: ObjectId(id)};
         const result = await productCollection.findOne(query);
         res.send(result);
+    })
+
+    // GET : Read data filtered by Email
+    app.get("/product", async(req, res)=>{
+        const headersAuth = req.headers.authorization;
+        console.log(headersAuth);
+        const email = req.query.email;
+        console.log(email)
+        const filter = {email : email};
+        const cursor = productCollection.find(filter)
+        const filterProducts = await cursor.toArray();
+        res.send(filterProducts)
     })
 
     // POST : Create new product
@@ -66,11 +88,13 @@ async function run() {
     })
 
     // DELETE : Delete a specific product
-    // http://localhost:5000/product/${id}
+    // http://localhost:5000/products/${id}
     app.delete("/product/:id", async(req,res)=>{
         const id = req.params.id;
         const query = {_id: ObjectId(id)};
+        console.log(query)
         const result = await productCollection.deleteOne(query);
+        console.log(result)
         res.send(result)
     })
 
